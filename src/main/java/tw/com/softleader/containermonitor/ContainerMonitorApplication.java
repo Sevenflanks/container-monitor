@@ -81,20 +81,22 @@ public class ContainerMonitorApplication {
 	@PostConstruct
 	public void run() throws IOException {
 		final LocalDateTime now = LocalDateTime.now();
-		callDockerStats(now)
-			.map(this::loadJvmMetric)
+		callDockerStats(now) // 取得 docker stats
+			.map(this::loadJvmMetric) // 取的 jvm metrics
 			.forEach(container -> {
-				try {
-					Path path = Paths.get(fileRoot, "record." + container.getImage().replaceAll("[:/]", "_") + ".csv");
-					boolean exists = path.toFile().exists();
-					OutputStream outputStream = Files.newOutputStream(
-							path,
-							StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
-
+				// 儲存路徑
+				Path path = Paths.get(fileRoot, "record." + container.getImage().replaceAll("[:/]", "_") + ".csv");
+				// 檢查是否為新建
+				boolean exists = path.toFile().exists();
+				try (OutputStream outputStream = Files.newOutputStream(
+						path,
+						StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND)) {
+					// 輸出格式為 csv
 					CsvSchema csvSchema = csvMapper().schemaFor(ContainerStats.class);
 					if (exists) {
 						csvMapper().writer(csvSchema).writeValue(outputStream, container);
 					} else {
+						// 若為新建，該次寫入要一併將title寫入
 						csvMapper().writer(csvSchema.withUseHeader(true)).writeValue(outputStream, container);
 					}
 				} catch (Exception e) {
@@ -104,8 +106,10 @@ public class ContainerMonitorApplication {
 
 	}
 
+	/** 取得 jvm 運行資訊 by container */
 	private ContainerStats loadJvmMetric(ContainerStats container) {
 		try {
+			// 呼叫 curl actuator endpoint
 			final List<String> cmdAndArgs;
 			if (isWindows) {
 				cmdAndArgs = Arrays.asList("cmd", "/c",
@@ -115,6 +119,7 @@ public class ContainerMonitorApplication {
 						"docker", "exec", container.getId(), "curl", "localhost:8080/metrics");
 			}
 
+			// 將結果轉為物件
 			final ProcessBuilder pb = new ProcessBuilder(cmdAndArgs);
 			final Process process = pb.start();
 			final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -128,7 +133,9 @@ public class ContainerMonitorApplication {
 		return container;
 	}
 
-	private Map<String, String[]> getDockerPs() throws IOException {
+	/** 取得 docker ps 資訊, 並以Map包裝(ContainerId為key) */
+	private Map<String, String[]> callDockerPs() throws IOException {
+		// 呼叫 docker ps
 		final List<String> cmdAndArgs;
 		if (isWindows) {
 			cmdAndArgs = Arrays.asList("cmd", "/c",
@@ -140,15 +147,20 @@ public class ContainerMonitorApplication {
 					"--format", "{{.ID}}"+S+"{{.Image}}"+S+"{{.Networks}}");
 		}
 
+		// 將結果轉換為 map
 		final ProcessBuilder pb = new ProcessBuilder(cmdAndArgs);
 		final Process process = pb.start();
 		final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+		// key=containerId, value=[image, networks]
 		return reader.lines()
 				.map(line -> line.split(S))
 				.collect(Collectors.toMap(r -> r[0], r -> new String[]{r[1], r[2]}));
 	}
 
+	/** 取得 docker stats 資訊 */
 	private Stream<ContainerStats> callDockerStats(LocalDateTime recordTime) throws IOException {
+		// 呼叫 docker stats
 		final List<String> cmdAndArgs;
 		if (isWindows) {
 			cmdAndArgs = Arrays.asList("cmd", "/c",
@@ -162,7 +174,10 @@ public class ContainerMonitorApplication {
 					"--format", "{{.ID}}"+S+"{{.Name}}"+S+"{{.CPUPerc}}"+S+"{{.MemUsage}}"+S+"{{.NetIO}}"+S+"{{.BlockIO}}");
 		}
 
-		final Map<String, String[]> dockerPs = getDockerPs();
+		// 呼叫 docker ps
+		final Map<String, String[]> dockerPs = callDockerPs();
+
+		// 將結果轉換為物件
 		final ProcessBuilder pb = new ProcessBuilder(cmdAndArgs);
 		final Process process = pb.start();
 		final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
