@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.1.6.RELEASE</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>tw.com.softleader</groupId>
+	<artifactId>container-monitor</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>container-monitor</name>
+	<description>Demo project for Spring Boot</description>
+
+	<properties>
+		<java.version>1.8</java.version>
+		<build.image>container-monitor</build.image>
+		<build.tag>0.1.0</build.tag>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.jooq</groupId>
+			<artifactId>jool-java-8</artifactId>
+			<version>0.9.13</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.8.11.3</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+			<version>2.8.8</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-csv</artifactId>
+			<version>2.8.11</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+
+			<plugin>
+				<groupId>com.google.cloud.tools</groupId>
+				<artifactId>jib-maven-plugin</artifactId>
+				<configuration>
+					<from>
+						<image>softleader/openjre8:lts-font</image>
+					</from>
+					<to>
+						<image>hub.softleader.com.tw/${build.image}</image>
+						<tags>
+							<tag>${build.tag}</tag>
+							<tag>latest</tag>
+						</tags>
+					</to>
+					<container>
+						<appRoot>/var/softleader_home</appRoot>
+						<entrypoint>INHERIT</entrypoint>
+						<environment>
+							<HEAP_DUMP>-XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$SL_DUMPS</HEAP_DUMP> <!-- * -->
+							<JAVA_OPTS>-Dsoftleader.boot.failFast=true -Xms2048m -Xmx2048m -Dspring.profiles.active=docker,schedule,elk</JAVA_OPTS> <!-- * -->
+						</environment>
+						<args>
+							<arg>java</arg>
+							<arg>-Djava.security.egd=file:/dev/./urandom</arg>
+							<arg>$HEAP_DUMP$HEAP_DUMP_FILE</arg>
+							<arg>$JAVA_OPTS</arg>
+							<arg>$DEVOPS_OPTS</arg>
+							<arg>-cp $SL_HOME/resources:$SL_HOME/classes:$SL_HOME/libs/*</arg>
+							<arg>tw.com.softleader.containermonitor.ContainerMonitorApplication</arg> <!-- * -->
+						</args>
+						<ports>
+							<port>8080</port>
+						</ports>=
+						<useCurrentTimestamp>true</useCurrentTimestamp>
+					</container>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
