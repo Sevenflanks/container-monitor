@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -48,7 +49,7 @@ public class DockerInfoCollector implements ApplicationRunner {
   @Override
   public void run(ApplicationArguments args) throws Exception {
     final LocalDateTime now = LocalDateTime.now();
-    log.info("running docker isWindows: {}", isWindows);
+    log.info("start collecting docker info, isWindows: {}", isWindows);
     callDockerStats(now) // 取得 docker stats
         .map(this::loadJvmMetric) // 取的 jvm metrics
         .forEach(container -> {
@@ -79,6 +80,7 @@ public class DockerInfoCollector implements ApplicationRunner {
           }
         });
 
+    log.info("finish collect docker info, processing time:{}", Duration.between(now, LocalDateTime.now()).toMillis());
   }
 
   /** 取得 jvm 運行資訊 by container */
