@@ -1,0 +1,37 @@
+apiVersion: batch/v2alpha1
+kind: CronJob
+metadata:
+  name: container-monitor
+  labels:
+    app: container-monitor
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: "Forbid"
+  suspend: false
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    metadata:
+      name: container-monitor
+      labels:
+        app: container-monitor
+    spec:
+      template:
+        metadata:
+          name: container-monitor
+          labels:
+            app: container-monitor
+        spec:
+          containers:
+          - name: container-monitor
+            image: softleader/container-monitor
+            imagePullPolicy: Always
+            volumeMounts:
+            - mountPath: /var/softleader_home/container_monitor/
+              name: container-monitor-volume
+              subPath: monitor
+          volumes:
+          - name: container-monitor-volume
+            persistentVolumeClaim:
+              claimName: jasmine-gateway-pvc
+          restartPolicy: Never
