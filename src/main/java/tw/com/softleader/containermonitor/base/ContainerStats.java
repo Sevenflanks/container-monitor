@@ -1,4 +1,4 @@
-package tw.com.softleader.containermonitor;
+package tw.com.softleader.containermonitor.base;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

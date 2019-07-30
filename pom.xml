@@ -72,10 +72,10 @@
 				<artifactId>jib-maven-plugin</artifactId>
 				<configuration>
 					<from>
-						<image>softleader/openjre8:lts-font</image>
+						<image>softleader/openjre8:lts</image>
 					</from>
 					<to>
-						<image>hub.softleader.com.tw/${build.image}</image>
+						<image>hub.softleader.com.tw/container-monitor</image>
 						<tags>
 							<tag>${build.tag}</tag>
 							<tag>latest</tag>
@@ -86,7 +86,7 @@
 						<entrypoint>INHERIT</entrypoint>
 						<environment>
 							<HEAP_DUMP>-XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$SL_DUMPS</HEAP_DUMP> <!-- * -->
-							<JAVA_OPTS>-Dsoftleader.boot.failFast=true -Xms2048m -Xmx2048m -Dspring.profiles.active=docker,schedule,elk</JAVA_OPTS> <!-- * -->
+							<JAVA_OPTS>-Dspring.profiles.active=docker</JAVA_OPTS> <!-- * -->
 						</environment>
 						<args>
 							<arg>java</arg>
@@ -99,7 +99,7 @@
 						</args>
 						<ports>
 							<port>8080</port>
-						</ports>=
+						</ports>
 						<useCurrentTimestamp>true</useCurrentTimestamp>
 					</container>
 				</configuration>
