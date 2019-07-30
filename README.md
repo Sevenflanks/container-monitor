@@ -21,7 +21,10 @@ docker run \
        softleader/container-monitor:v0.1.0
 ```
 
-- [ ] run as helm chart
+- [X] run as helm chart cronjob
+```
+呃..雖然提供了可是Matt操作太快我沒記下來
+```
 
 ### properties
 | name                                    | value sample                 |
