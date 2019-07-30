@@ -29,9 +29,41 @@ spec:
             volumeMounts:
             - mountPath: /var/softleader_home/container_monitor/
               name: container-monitor-volume
-              subPath: monitor
+            - mountPath: "/var/run/docker.sock"
+              name: docker-socket
           volumes:
-          - name: container-monitor-volume
+          - name: docker-socket
             persistentVolumeClaim:
-              claimName: jasmine-gateway-pvc
+              claimName: docker-socket-claim
+          - name: container-monitor-volume
+#             persistentVolumeClaim:
+#               claimName: jasmine-gateway-pvc
+              hostPath:
+                path: /data
+                type: Directory
           restartPolicy: Never
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: docker-socket
+spec:
+  storageClassName: "docker-socket"
+  capacity:
+    storage: 1Ki
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/var/run/docker.sock"
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: docker-socket-claim
+spec:
+  storageClassName: "docker-socket"
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Ki
