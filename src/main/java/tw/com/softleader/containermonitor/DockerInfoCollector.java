@@ -48,7 +48,7 @@ public class DockerInfoCollector implements ApplicationRunner {
   @Override
   public void run(ApplicationArguments args) throws Exception {
     final LocalDateTime now = LocalDateTime.now();
-    log.info("isWindows: {}", isWindows);
+    log.info("running docker isWindows: {}", isWindows);
     callDockerStats(now) // 取得 docker stats
         .map(this::loadJvmMetric) // 取的 jvm metrics
         .forEach(container -> {
@@ -166,6 +166,7 @@ public class DockerInfoCollector implements ApplicationRunner {
     final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
     System.out.println("docker stats");
     return reader.lines()
+        .filter(line -> !line.contains("ibmcom"))
         .map(line -> {
           System.out.println(line);
           return line;
