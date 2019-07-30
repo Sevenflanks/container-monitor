@@ -75,7 +75,7 @@
 						<image>softleader/openjdre8:lts-docker</image>
 					</from>
 					<to>
-						<image>hub.softleader.com.tw/container-monitor</image>
+						<image>softleader/container-monitor</image>
 						<tags>
 							<tag>${build.tag}</tag>
 							<tag>latest</tag>

@@ -18,7 +18,7 @@ docker run \
        --rm \
        -v //var/run/docker.sock:/var/run/docker.sock \
        -v "C:/develop/container-monitor:/var/softleader_home/container_monitor/" \
-       hub.softleader.com.tw/container-monitor:v0.1.0
+       softleader/container-monitor:v0.1.0
 ```
 
 - [ ] run as helm chart
