@@ -134,7 +134,13 @@ public class DockerInfoCollector implements ApplicationRunner {
           return line;
         })
         .map(line -> line.split(S))
-        .collect(Collectors.toMap(r -> r[0], r -> new String[]{r[1], r[2]}));
+        .collect(Collectors.toMap(r -> r[0], r -> {
+          if (r.length > 2) {
+            return new String[]{r[1], r[2]};
+          } else {
+            return new String[]{r[1], "N/A"};
+          }
+        }));
   }
 
   /** 取得 docker stats 資訊 */
