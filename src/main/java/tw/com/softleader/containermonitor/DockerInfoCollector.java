@@ -48,12 +48,14 @@ public class DockerInfoCollector implements ApplicationRunner {
   @Override
   public void run(ApplicationArguments args) throws Exception {
     final LocalDateTime now = LocalDateTime.now();
+    log.info("isWindows: {}", isWindows);
     callDockerStats(now) // 取得 docker stats
         .map(this::loadJvmMetric) // 取的 jvm metrics
         .forEach(container -> {
           // 儲存路徑
           Path root = Paths.get(fileRoot);
           Path path = root.resolve("record." + container.getImage().replaceAll("[:/]", "_") + ".csv");
+          log.info("saving csv file: {}", path);
           // 檢查是否為新建
           boolean exists = path.toFile().exists();
           try (OutputStream outputStream = Files.newOutputStream(
@@ -89,7 +91,7 @@ public class DockerInfoCollector implements ApplicationRunner {
             "docker", "exec", container.getId(), "curl", "localhost:8080/metrics");
       } else {
         cmdAndArgs = Arrays.asList("/bin/sh", "-c",
-            "docker", "exec", container.getId(), "curl", "localhost:8080/metrics");
+            "docker exec " + container.getId() + " curl localhost:8080/metrics -s");
       }
 
       // 將結果轉為物件
@@ -116,8 +118,7 @@ public class DockerInfoCollector implements ApplicationRunner {
           "--format", "{{.ID}}"+S+"{{.Image}}"+S+"{{.Networks}}");
     } else {
       cmdAndArgs = Arrays.asList("/bin/sh", "-c",
-          "docker", "ps",
-          "--format", "{{.ID}}"+S+"{{.Image}}"+S+"{{.Networks}}");
+          "docker ps --format {{.ID}}"+S+"{{.Image}}"+S+"{{.Networks}}");
     }
 
     // 將結果轉換為 map
@@ -126,7 +127,12 @@ public class DockerInfoCollector implements ApplicationRunner {
     final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
     // key=containerId, value=[image, networks]
+    System.out.println("docker ps");
     return reader.lines()
+        .map(line -> {
+          System.out.println(line);
+          return line;
+        })
         .map(line -> line.split(S))
         .collect(Collectors.toMap(r -> r[0], r -> new String[]{r[1], r[2]}));
   }
@@ -142,9 +148,7 @@ public class DockerInfoCollector implements ApplicationRunner {
           "--format", "{{.ID}}"+S+"{{.Name}}"+S+"{{.CPUPerc}}"+S+"{{.MemUsage}}"+S+"{{.NetIO}}"+S+"{{.BlockIO}}");
     } else {
       cmdAndArgs = Arrays.asList("/bin/sh", "-c",
-          "docker", "stats",
-          "--no-stream",
-          "--format", "{{.ID}}"+S+"{{.Name}}"+S+"{{.CPUPerc}}"+S+"{{.MemUsage}}"+S+"{{.NetIO}}"+S+"{{.BlockIO}}");
+          "docker stats --no-stream --format {{.ID}}"+S+"{{.Name}}"+S+"{{.CPUPerc}}"+S+"{{.MemUsage}}"+S+"{{.NetIO}}"+S+"{{.BlockIO}}");
     }
 
     // 呼叫 docker ps
@@ -154,7 +158,12 @@ public class DockerInfoCollector implements ApplicationRunner {
     final ProcessBuilder pb = new ProcessBuilder(cmdAndArgs);
     final Process process = pb.start();
     final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+    System.out.println("docker stats");
     return reader.lines()
+        .map(line -> {
+          System.out.println(line);
+          return line;
+        })
         .map(line -> {
           String[] dockerStats = line.split(S);
           String id = dockerStats[0];

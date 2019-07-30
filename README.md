@@ -10,7 +10,17 @@ mvn spring-boot:run
 # 透過Maven啟動，記錄檔寫在指定目錄
 mvn spring-boot:run -Dcontainer.monitor.record.file.path.root=/logs/
 ```
-- [ ] run as docker image
+
+- [X] run as docker image
+```
+# 透過Docker啟動，紀錄寫出至mount目錄
+docker run \
+       --rm \
+       -v //var/run/docker.sock:/var/run/docker.sock \
+       -v "C:/develop/container-monitor:/var/softleader_home/container_monitor/" \
+       hub.softleader.com.tw/container-monitor:v0.1.0
+```
+
 - [ ] run as helm chart
 
 ### properties

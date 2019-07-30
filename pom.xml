@@ -72,7 +72,7 @@
 				<artifactId>jib-maven-plugin</artifactId>
 				<configuration>
 					<from>
-						<image>softleader/openjre8:lts</image>
+						<image>softleader/openjdre8:lts-docker</image>
 					</from>
 					<to>
 						<image>hub.softleader.com.tw/container-monitor</image>
@@ -82,24 +82,9 @@
 						</tags>
 					</to>
 					<container>
-						<appRoot>/var/softleader_home</appRoot>
-						<entrypoint>INHERIT</entrypoint>
-						<environment>
-							<HEAP_DUMP>-XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$SL_DUMPS</HEAP_DUMP> <!-- * -->
-							<JAVA_OPTS>-Dspring.profiles.active=docker</JAVA_OPTS> <!-- * -->
-						</environment>
-						<args>
-							<arg>java</arg>
-							<arg>-Djava.security.egd=file:/dev/./urandom</arg>
-							<arg>$HEAP_DUMP$HEAP_DUMP_FILE</arg>
-							<arg>$JAVA_OPTS</arg>
-							<arg>$DEVOPS_OPTS</arg>
-							<arg>-cp $SL_HOME/resources:$SL_HOME/classes:$SL_HOME/libs/*</arg>
-							<arg>tw.com.softleader.containermonitor.ContainerMonitorApplication</arg> <!-- * -->
-						</args>
-						<ports>
-							<port>8080</port>
-						</ports>
+						<jvmFlags>
+							<jvmFlag>-Dspring.profiles.active=docker</jvmFlag>
+						</jvmFlags>
 						<useCurrentTimestamp>true</useCurrentTimestamp>
 					</container>
 				</configuration>
