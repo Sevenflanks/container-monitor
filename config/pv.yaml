@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: docker-socket
+spec:
+  storageClassName: "docker-socket"
+  capacity:
+    storage: 1Ki
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/var/run/docker.sock"

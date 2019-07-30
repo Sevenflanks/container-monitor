@@ -1,0 +1,11 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: docker-socket-claim
+spec:
+  storageClassName: "docker-socket"
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Ki
