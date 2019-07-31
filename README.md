@@ -47,12 +47,24 @@ management.security.enabled=false
 ### Tips
 1. 可以用Excel開啟CSV繪製圖表
 2. 於Excel中可以利用格式化將容量數字轉換為人類看得懂的樣式
- - `[<1000000]#,##0.00," KB";[<1000000000]#,##0.00,," MB";#,##0.00,,," GB"`
- - 適用欄位
+  - `[<1000000]#,##0.00," KB";[<1000000000]#,##0.00,," MB";#,##0.00,,," GB"`
     - memUsage
     - memLimit
     - netIn
     - netOut
     - blockIn
     - blockOut
-
+  - `[<1000]#,##0.00" KB";[<1000000]#,##0.00," MB";#,##0.00,," GB"`
+    - mem
+    - mem.free
+    - heap.committed
+    - heap.init
+    - heap.used
+    - heap
+    - nonheap.committed
+    - nonheap.init
+    - nonheap.used
+    - nonheap
+3. 數值含意
+  - jvm.mem = jvm.mem.free + jvm.heap.used + jvm.nonheap.used
+  > https://github.com/spring-projects/spring-boot/blob/v1.3.2.RELEASE/spring-boot-actuator/src/main/java/org/springframework/boot/actuate/endpoint/SystemPublicMetrics.java
