@@ -42,3 +42,17 @@ management.security.enabled=false
 1. 啟動後，會立即蒐集當前環境的 docker ps, docker stats 資訊
 2. 如果情況允許，將會蒐集Jvm運行資訊 (需要該Container有開出Actuator的Metrics Endpoint)
 3. 蒐集完一切資訊後，根據 image name 產生運行記錄檔 (.csv)
+
+
+### Tips
+1. 可以用Excel開啟CSV繪製圖表
+2. 於Excel中可以利用格式化將容量數字轉換為人類看得懂的樣式
+ - `[<1000000]#,##0.00," KB";[<1000000000]#,##0.00,," MB";#,##0.00,,," GB"`
+ - 適用欄位
+    - memUsage
+    - memLimit
+    - netIn
+    - netOut
+    - blockIn
+    - blockOut
+
