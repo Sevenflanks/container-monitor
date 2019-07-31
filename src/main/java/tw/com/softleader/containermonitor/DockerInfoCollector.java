@@ -168,7 +168,6 @@ public class DockerInfoCollector implements ApplicationRunner {
     final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
     System.out.println("docker stats");
     return reader.lines()
-        .filter(line -> !line.contains("ibmcom"))
         .map(line -> {
           System.out.println(line);
           return line;
@@ -196,7 +195,8 @@ public class DockerInfoCollector implements ApplicationRunner {
               .blockOut(BytesUtils.toB(block[1]))
               .recordTime(recordTime)
               .build();
-        });
+        })
+        .filter(c -> !c.getImage().startsWith("ibmcom"));
   }
 
 }
