@@ -1,7 +1,11 @@
+// URIs:
+:img-docker-image: https://images.microbadger.com/badges/version/softleader/container-monitor.svg
+:url-docker-image: https://microbadger.com/images/softleader/container-monitor
+
 = Container Monitor
 這是一個用於紀錄機器上 docker stats 的 java app
 
-image:{https://images.microbadger.com/badges/version/softleader/container-monitor.svg}[Get your own version badge on microbadger.com,link={https://microbadger.com/images/softleader/container-monitor}]
+image:{img-docker-image}[Get your own version badge on microbadger.com,link={url-docker-image}]
 
 == build
 ```
