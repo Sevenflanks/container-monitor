@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: container-monitor
+spec:
+  selector:
+    matchLabels:
+      app: container-monitor 
+  template:
+    metadata:
+      labels:
+        app: container-monitor 
+    spec:
+      volumes:
+      - name: docker-socket
+        persistentVolumeClaim:
+          claimName: docker-socket-claim
+      - name: container-monitor-volume
+        hostPath:
+          path: /data
+          type: Directory
+      containers:
+        - name: container-monitor
+          image: softleader/container-monitor
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m 
+              memory: 384Mi
+          env:
+          - name: JAVA_TOOL_OPTIONS
+            value: >- 
+              -Xmx256m -Xms128m
+          volumeMounts:
+            - mountPath: /var/softleader_home/container_monitor/
+              name: container-monitor-volume
+            - mountPath: "/var/run/docker.sock"
+              name: docker-socket
