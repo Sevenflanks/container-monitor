@@ -1,6 +1,8 @@
 = Container Monitor
 這是一個用於紀錄機器上 docker stats 的 java app
 
+image:{https://images.microbadger.com/badges/version/softleader/container-monitor.svg}[Get your own version badge on microbadger.com,link={https://microbadger.com/images/softleader/container-monitor}]
+
 == build
 ```
 # build image
