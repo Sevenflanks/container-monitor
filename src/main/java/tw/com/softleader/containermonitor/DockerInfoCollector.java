@@ -77,7 +77,7 @@ public class DockerInfoCollector implements ApplicationRunner {
           // 儲存路徑
           Path root = Paths.get(fileRoot);
           Path path = root.resolve("record." + container.getImage().replaceAll("[:/]", "_") + ".csv");
-          log.info("saving csv file: {}", path);
+          log.debug("saving csv file: {}", path);
           // 檢查是否為新建
           boolean exists = path.toFile().exists();
           try (OutputStream outputStream = Files.newOutputStream(
@@ -150,10 +150,10 @@ public class DockerInfoCollector implements ApplicationRunner {
     final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
     // key=containerId, value=[image, networks]
-    System.out.println("docker ps");
+    log.debug("running command: docker ps");
     return reader.lines()
         .map(line -> {
-          System.out.println(line);
+          log.trace(line);
           return line;
         })
         .map(line -> line.split(S))
@@ -187,10 +187,10 @@ public class DockerInfoCollector implements ApplicationRunner {
     final ProcessBuilder pb = new ProcessBuilder(cmdAndArgs);
     final Process process = pb.start();
     final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-    System.out.println("docker stats");
+    log.debug("running command: docker stats");
     return reader.lines()
         .map(line -> {
-          System.out.println(line);
+          log.trace(line);
           return line;
         })
         .map(line -> {
