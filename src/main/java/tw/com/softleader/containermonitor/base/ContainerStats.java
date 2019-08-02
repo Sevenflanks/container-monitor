@@ -1,13 +1,11 @@
 package tw.com.softleader.containermonitor.base;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.Wither;
 
 import java.time.LocalDateTime;
 
@@ -20,6 +18,7 @@ import java.time.LocalDateTime;
     "recordTime", "id", "name", "image", "network", "cpuPerc", "memUsage", "memLimit", "netIn", "netOut", "blockIn", "blockOut", "jvmMetric"
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Wither
 public class ContainerStats {
 
   private String id;
@@ -39,4 +38,8 @@ public class ContainerStats {
   @JsonUnwrapped(prefix = "jvm.")
   private JvmMetric jvmMetric;
 
+  @JsonIgnore
+  public String getSaveFilename() {
+    return "record." + image.replaceAll("[:/]", "_") + ".csv";
+  }
 }

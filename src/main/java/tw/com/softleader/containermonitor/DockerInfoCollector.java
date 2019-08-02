@@ -30,6 +30,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -77,7 +78,7 @@ public class DockerInfoCollector implements ApplicationRunner {
         .forEach(container -> {
           // 儲存路徑
           Path root = Paths.get(fileRoot);
-          Path path = root.resolve("record." + container.getImage().replaceAll("[:/]", "_") + ".csv");
+          Path path = root.resolve(container.getSaveFilename());
           log.debug("saving csv file: {}", path);
           // 檢查是否為新建
           boolean exists = path.toFile().exists();
@@ -144,16 +145,21 @@ public class DockerInfoCollector implements ApplicationRunner {
           return line;
         })
         .map(line -> line.split(S))
-        .collect(Collectors.toMap(r -> r[0], r -> {
+        .collect(toPsMap());
+  }
+
+    Collector<String[], ?, Map<String, String[]>> toPsMap() {
+        return Collectors.toMap(r -> r[0], r -> {
           if (r.length > 2) {
             return new String[]{r[1], r[2]};
           } else {
             return new String[]{r[1], "N/A"};
           }
-        }));
-  }
+        });
+    }
 
-  /** 取得 docker stats 資訊 */
+
+    /** 取得 docker stats 資訊 */
   private Stream<ContainerStats> callDockerStats(LocalDateTime recordTime) throws IOException {
     // 呼叫 docker stats
     final List<String> cmdAndArgs = command.dockerStats();
@@ -171,16 +177,21 @@ public class DockerInfoCollector implements ApplicationRunner {
           log.trace(line);
           return line;
         })
-        .map(line -> {
-          String[] dockerStats = line.split(S);
-          String id = dockerStats[0];
-          String cpu = dockerStats[2];
-          String[] mem = dockerStats[3].split(" / ");
-          String[] net = dockerStats[4].split(" / ");
-          String[] block = dockerStats[5].split(" / ");
-          String[] dockerInfo = dockerPs.get(id);
+        .map(line -> toContainer(line, dockerPs))
+        .map(container -> container.withRecordTime(recordTime))
+        .filter(c -> !c.getImage().startsWith("ibmcom"));
+  }
 
-          return ContainerStats.builder()
+  ContainerStats toContainer(String line, Map<String, String[]> dockerPs) {
+      String[] dockerStats = line.split(S);
+      String id = dockerStats[0];
+      String cpu = dockerStats[2];
+      String[] mem = dockerStats[3].split(" / ");
+      String[] net = dockerStats[4].split(" / ");
+      String[] block = dockerStats[5].split(" / ");
+      String[] dockerInfo = dockerPs.get(id);
+
+      return ContainerStats.builder()
               .id(id)
               .name(dockerStats[1])
               .image(dockerInfo[0])
@@ -192,10 +203,7 @@ public class DockerInfoCollector implements ApplicationRunner {
               .netOut(BytesUtils.toB(net[1]))
               .blockIn(BytesUtils.toB(block[0]))
               .blockOut(BytesUtils.toB(block[1]))
-              .recordTime(recordTime)
               .build();
-        })
-        .filter(c -> !c.getImage().startsWith("ibmcom"));
   }
 
 }

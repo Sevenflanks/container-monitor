@@ -21,35 +21,34 @@ public class BytesUtils {
 
   public static double toB(String input) {
     Matcher matcher = LAYOUT_PATTERN.matcher(input);
-    if (matcher.matches()) {
-      Double size = Double.valueOf(matcher.group(1));
-      String unit = matcher.group(2);
+    if (!matcher.matches()) {
+      throw new IllegalArgumentException(String.format("unsupported input: %s, requires matches regex: %s", input, LAYOUT_PATTERN));
+    }
 
-      if (unit.contains("i")) {
-        switch (unit) {
-          case "PiB": return size * PiB;
-          case "TiB": return size * TiB;
-          case "GiB": return size * GiB;
-          case "MiB": return size * MiB;
-          case "KiB": return size * KiB;
-          case "kiB": return size * KiB;
-          default: throw new RuntimeException("unsupport unit: " + unit);
-        }
-      } else {
-        switch (unit) {
-          case "PB": return size * PB;
-          case "TB": return size * TB;
-          case "GB": return size * GB;
-          case "MB": return size * MB;
-          case "KB": return size * KB;
-          case "kB": return size * KB;
-          case "B": return size * B;
-          default: throw new RuntimeException("unsupport unit: " + unit);
-        }
+    Double size = Double.valueOf(matcher.group(1));
+    String unit = matcher.group(2);
+
+    if (unit.contains("i")) {
+      switch (unit) {
+        case "PiB": return size * PiB;
+        case "TiB": return size * TiB;
+        case "GiB": return size * GiB;
+        case "MiB": return size * MiB;
+        case "KiB": return size * KiB;
+        case "kiB": return size * KiB;
+        default: throw new IllegalArgumentException("unsupported unit: " + unit);
       }
-
     } else {
-      throw new RuntimeException("unsupport input: " + input);
+      switch (unit) {
+        case "PB": return size * PB;
+        case "TB": return size * TB;
+        case "GB": return size * GB;
+        case "MB": return size * MB;
+        case "KB": return size * KB;
+        case "kB": return size * KB;
+        case "B": return size * B;
+        default: throw new IllegalArgumentException("unsupported unit: " + unit);
+      }
     }
   }
 
