@@ -26,7 +26,7 @@ docker run \
        -v "C:/develop/container-monitor:/var/softleader_home/container_monitor/" \
        softleader/container-monitor:latest
 
-# 透過Docker啟動，紀錄寫出至mount目錄，且以CornJob的方式運行
+# 透過Docker啟動，紀錄寫出至mount目錄，且以CornJob的方式運行，每分鐘紀錄一次
 docker run \
        --rm \
        -v //var/run/docker.sock:/var/run/docker.sock \
@@ -54,7 +54,7 @@ docker run \
 run as docker image: `/var/softleader_home/container_monitor/`
 
 | container.monitor.run.cron_job
-| 若為空則啟動單次後結束App, 若有值則已CronJob模式啟動
+| 若為空則啟動單次後結束App, 若有值則以CronJob模式啟動
 | `0 * * * * *`, https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/scheduling/support/CronSequenceGenerator.html[doc]
 | null
 

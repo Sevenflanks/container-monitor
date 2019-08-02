@@ -101,7 +101,7 @@ public class DockerInfoCollector implements ApplicationRunner {
           }
         });
 
-    log.info("finish collect docker info, processing time:{}ms", NumberFormat.getCurrencyInstance().format(Duration.between(now, LocalDateTime.now()).toMillis()));
+    log.info("finish collect docker info, processing time:{}ms", NumberFormat.getIntegerInstance().format(Duration.between(now, LocalDateTime.now()).toMillis()));
   }
 
   /** 取得 jvm 運行資訊 by container */
