@@ -9,7 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import tw.com.softleader.containermonitor.base.BytesUtils;
 import tw.com.softleader.containermonitor.base.ContainerStats;
 import tw.com.softleader.containermonitor.base.JvmMetric;
@@ -22,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -40,14 +44,31 @@ public class DockerInfoCollector implements ApplicationRunner {
   @Value("${container.monitor.record.file.path.root}")
   private String fileRoot;
 
+  @Value("${container.monitor.run.cron_job}")
+  private String cronJob;
+
   @Autowired
   private ObjectMapper objectMapper;
 
   @Autowired
   private CsvMapper csvMapper;
 
+  @Autowired
+  private TaskScheduler taskScheduler;
+
   @Override
   public void run(ApplicationArguments args) throws Exception {
+    if (StringUtils.isEmpty(cronJob)) {
+      log.info("running once");
+      doCollect();
+    } else {
+      // 如果有輸入cronJob則依cronjob的方式跑
+      log.info("running with cron job, {}", cronJob);
+      taskScheduler.schedule(Unchecked.runnable(this::doCollect), new CronTrigger(cronJob));
+    }
+  }
+
+  private void doCollect() throws IOException {
     final LocalDateTime now = LocalDateTime.now();
     log.info("start collecting docker info, isWindows: {}", isWindows);
     callDockerStats(now) // 取得 docker stats
@@ -80,7 +101,7 @@ public class DockerInfoCollector implements ApplicationRunner {
           }
         });
 
-    log.info("finish collect docker info, processing time:{}", Duration.between(now, LocalDateTime.now()).toMillis());
+    log.info("finish collect docker info, processing time:{}ms", NumberFormat.getCurrencyInstance().format(Duration.between(now, LocalDateTime.now()).toMillis()));
   }
 
   /** 取得 jvm 運行資訊 by container */
