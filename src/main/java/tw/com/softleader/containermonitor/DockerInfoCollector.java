@@ -28,18 +28,16 @@ import java.nio.file.StandardOpenOption;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static tw.com.softleader.containermonitor.Command.*;
+
 @Slf4j
 @Service
 public class DockerInfoCollector implements ApplicationRunner {
-
-  private static final String S = "::";
-  private boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
 
   @Value("${container.monitor.record.file.path.root}")
   private String fileRoot;
@@ -56,6 +54,9 @@ public class DockerInfoCollector implements ApplicationRunner {
   @Autowired
   private TaskScheduler taskScheduler;
 
+  @Autowired
+  private Command command;
+
   @Override
   public void run(ApplicationArguments args) throws Exception {
     if (StringUtils.isEmpty(cronJob)) {
@@ -70,7 +71,7 @@ public class DockerInfoCollector implements ApplicationRunner {
 
   private void doCollect() throws IOException {
     final LocalDateTime now = LocalDateTime.now();
-    log.info("start collecting docker info, isWindows: {}", isWindows);
+    log.info("start collecting docker info");
     callDockerStats(now) // 取得 docker stats
         .map(this::loadJvmMetric) // 取的 jvm metrics
         .forEach(container -> {
@@ -108,14 +109,8 @@ public class DockerInfoCollector implements ApplicationRunner {
   private ContainerStats loadJvmMetric(ContainerStats container) {
     try {
       // 呼叫 curl actuator endpoint
-      final List<String> cmdAndArgs;
-      if (isWindows) {
-        cmdAndArgs = Arrays.asList("cmd", "/c",
-            "docker", "exec", container.getId(), "curl", "localhost:8080/metrics");
-      } else {
-        cmdAndArgs = Arrays.asList("/bin/sh", "-c",
-            "docker exec " + container.getId() + " curl localhost:8080/metrics -s");
-      }
+      final List<String> cmdAndArgs = command.curlJvmMetrics(container.getId());
+      log.debug("running curl jvm metrics command: {}", cmdAndArgs);
 
       // 將結果轉為物件
       final ProcessBuilder pb = new ProcessBuilder(cmdAndArgs);
@@ -134,15 +129,7 @@ public class DockerInfoCollector implements ApplicationRunner {
   /** 取得 docker ps 資訊, 並以Map包裝(ContainerId為key) */
   private Map<String, String[]> callDockerPs() throws IOException {
     // 呼叫 docker ps
-    final List<String> cmdAndArgs;
-    if (isWindows) {
-      cmdAndArgs = Arrays.asList("cmd", "/c",
-          "docker", "ps",
-          "--format", "{{.ID}}"+S+"{{.Image}}"+S+"{{.Networks}}");
-    } else {
-      cmdAndArgs = Arrays.asList("/bin/sh", "-c",
-          "docker ps --format {{.ID}}"+S+"{{.Image}}"+S+"{{.Networks}}");
-    }
+    final List<String> cmdAndArgs = command.dockerPs();
 
     // 將結果轉換為 map
     final ProcessBuilder pb = new ProcessBuilder(cmdAndArgs);
@@ -150,7 +137,7 @@ public class DockerInfoCollector implements ApplicationRunner {
     final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
     // key=containerId, value=[image, networks]
-    log.debug("running command: docker ps");
+    log.debug("running docker ps command: {}", cmdAndArgs);
     return reader.lines()
         .map(line -> {
           log.trace(line);
@@ -169,16 +156,7 @@ public class DockerInfoCollector implements ApplicationRunner {
   /** 取得 docker stats 資訊 */
   private Stream<ContainerStats> callDockerStats(LocalDateTime recordTime) throws IOException {
     // 呼叫 docker stats
-    final List<String> cmdAndArgs;
-    if (isWindows) {
-      cmdAndArgs = Arrays.asList("cmd", "/c",
-          "docker", "stats",
-          "--no-stream",
-          "--format", "{{.ID}}"+S+"{{.Name}}"+S+"{{.CPUPerc}}"+S+"{{.MemUsage}}"+S+"{{.NetIO}}"+S+"{{.BlockIO}}");
-    } else {
-      cmdAndArgs = Arrays.asList("/bin/sh", "-c",
-          "docker stats --no-stream --format {{.ID}}"+S+"{{.Name}}"+S+"{{.CPUPerc}}"+S+"{{.MemUsage}}"+S+"{{.NetIO}}"+S+"{{.BlockIO}}");
-    }
+    final List<String> cmdAndArgs = command.dockerStats();
 
     // 呼叫 docker ps
     final Map<String, String[]> dockerPs = callDockerPs();
@@ -187,7 +165,7 @@ public class DockerInfoCollector implements ApplicationRunner {
     final ProcessBuilder pb = new ProcessBuilder(cmdAndArgs);
     final Process process = pb.start();
     final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-    log.debug("running command: docker stats");
+    log.debug("running docker stats command: {}", cmdAndArgs);
     return reader.lines()
         .map(line -> {
           log.trace(line);

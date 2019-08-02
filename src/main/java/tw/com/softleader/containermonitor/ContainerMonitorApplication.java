@@ -57,4 +57,13 @@ public class ContainerMonitorApplication {
 		return csvMapper;
 	}
 
+	@Bean
+	public Command command() {
+		log.info("detected OS: {}", System.getProperty("os.name"));
+		if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+			return new WindowsCommand();
+		}
+		return new UnixCommand();
+	}
+
 }
