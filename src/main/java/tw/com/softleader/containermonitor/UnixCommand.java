@@ -9,7 +9,7 @@ public class UnixCommand implements Command {
 	@Override
 	public List<String> curlJvmMetrics(@NonNull String containerId) {
 		return Arrays.asList("/bin/sh", "-c",
-				"docker exec " + containerId + " curl localhost:8080/metrics -s");
+				"docker exec " + containerId + " -H '" + AUTH + "' curl localhost:8080/metrics -s");
 	}
 
 	@Override

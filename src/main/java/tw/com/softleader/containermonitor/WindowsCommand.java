@@ -8,8 +8,8 @@ import java.util.List;
 public class WindowsCommand implements Command {
 	@Override
 	public List<String> curlJvmMetrics(@NonNull String containerId) {
-        return Arrays.asList("cmd", "/c",
-		    "docker", "exec", containerId, "curl", "localhost:8080/metrics");
+		return Arrays.asList("cmd", "/c",
+		    "docker", "exec", containerId, "curl", "-H", AUTH, "localhost:8080/metrics");
 	}
 
 	@Override
