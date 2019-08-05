@@ -72,7 +72,7 @@
 				<artifactId>jib-maven-plugin</artifactId>
 				<configuration>
 					<from>
-						<image>softleader/openjdre8:lts-docker</image>
+						<image>softleader/openjre8:lts-docker</image>
 					</from>
 					<to>
 						<image>softleader/container-monitor</image>
