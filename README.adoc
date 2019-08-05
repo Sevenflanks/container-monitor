@@ -10,7 +10,7 @@ image:{img-docker-image}[Get your own version badge on microbadger.com,link={url
 == build
 ```
 # build image
-mvn clean compile jib:build -Dbuild.tag=v0.3.0
+mvn clean compile jib:build -Dbuild.tag=v0.4.1
 ```
 
 == run
