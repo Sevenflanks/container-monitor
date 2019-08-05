@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import java.nio.file.StandardOpenOption;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collector;
@@ -38,6 +40,7 @@ import static tw.com.softleader.containermonitor.Command.*;
 
 @Slf4j
 @Service
+@Profile("!test")
 public class DockerInfoCollector implements ApplicationRunner {
 
   @Value("${container.monitor.record.file.path.root}")
@@ -45,6 +48,9 @@ public class DockerInfoCollector implements ApplicationRunner {
 
   @Value("${container.monitor.run.cron_job}")
   private String cronJob;
+
+  @Value("${container.monitor.run.namespaces}")
+  Collection<String> namespaces;
 
   @Autowired
   private ObjectMapper objectMapper;
@@ -60,6 +66,9 @@ public class DockerInfoCollector implements ApplicationRunner {
 
   @Override
   public void run(ApplicationArguments args) throws Exception {
+    if (namespaces.size() > 0) {
+      log.info("detected specified namespaces: {}", namespaces);
+    }
     if (StringUtils.isEmpty(cronJob)) {
       log.info("running once");
       doCollect();
@@ -179,7 +188,17 @@ public class DockerInfoCollector implements ApplicationRunner {
         })
         .map(line -> toContainer(line, dockerPs))
         .map(container -> container.withRecordTime(recordTime))
-        .filter(c -> !c.getImage().startsWith("ibmcom"));
+        .filter(this::isMonitorTarget);
+  }
+
+  boolean isMonitorTarget(ContainerStats c) {
+      if (c.getImage().startsWith("ibmcom")) {
+        return false;
+      }
+      if (namespaces.size() > 0 && c.getK8sDeployNaming().isPresent()) {
+          return namespaces.stream().anyMatch(ns -> ns.equals(c.getK8sDeployNaming().get().getNamespace()));
+      }
+      return true;
   }
 
   ContainerStats toContainer(String line, Map<String, String[]> dockerPs) {
@@ -194,6 +213,7 @@ public class DockerInfoCollector implements ApplicationRunner {
       return ContainerStats.builder()
               .id(id)
               .name(dockerStats[1])
+              .k8sDeployNaming(K8sDeployNames.from(dockerStats[1]))
               .image(dockerInfo[0])
               .network(dockerInfo[1])
               .cpuPerc(Double.valueOf(cpu.substring(0, cpu.length() -1)))

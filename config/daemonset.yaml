@@ -32,8 +32,9 @@ spec:
               memory: 384Mi
           env:
           - name: JAVA_TOOL_OPTIONS
-            value: >- 
+            value: >-
               -Dcontainer.monitor.run.cron_job='0 0/5 * * * *'
+              -Dcontainer.monitor.run.namespaces='jasmine-prod,jasmine-uat'
               -Xmx256m -Xms128m
           volumeMounts:
             - mountPath: /var/softleader_home/container_monitor/

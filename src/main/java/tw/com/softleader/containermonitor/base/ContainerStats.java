@@ -6,8 +6,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import lombok.*;
 import lombok.experimental.Wither;
+import tw.com.softleader.containermonitor.K8sDeployNames;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -38,8 +40,16 @@ public class ContainerStats {
   @JsonUnwrapped(prefix = "jvm.")
   private JvmMetric jvmMetric;
 
+
+  @JsonIgnore
+  private Optional<K8sDeployNames> k8sDeployNaming;
+
   @JsonIgnore
   public String getSaveFilename() {
-    return "record." + image.replaceAll("[:/]", "_") + ".csv";
+    return "record."
+        + k8sDeployNaming
+            .map(K8sDeployNames::getContainerName)
+            .orElseGet(() -> image.replaceAll("[:/]", "_"))
+        + ".csv";
   }
 }

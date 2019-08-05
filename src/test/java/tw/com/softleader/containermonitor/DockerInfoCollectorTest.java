@@ -2,6 +2,7 @@ package tw.com.softleader.containermonitor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
+import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,14 +15,13 @@ import static tw.com.softleader.containermonitor.Command.S;
 
 public class DockerInfoCollectorTest {
 
-  private ObjectMapper mapper;
   private DockerInfoCollector collector;
   private Map<String, String[]> dockerPs;
 
   @Before
   public void init() {
-    mapper = new ObjectMapper();
     collector = new DockerInfoCollector();
+    collector.namespaces = Lists.newArrayList( "jasmine-prod");
     try (Stream<String> stream = classLoaderResource("log_docker_ps")) {
       dockerPs = stream.map(line -> line.split(S)).collect(collector.toPsMap());
     }
@@ -32,8 +32,7 @@ public class DockerInfoCollectorTest {
     try (Stream<String> stream = classLoaderResource("log_docker_stats")) {
       stream
           .map(line -> collector.toContainer(line, dockerPs))
-          .filter(c -> !c.getImage().startsWith("ibmcom"))
-          .filter(container -> !container.getSaveFilename().contains("jasmine"))
+          .filter(collector::isMonitorTarget)
           .forEach(
               c ->
                   System.out.println(
