@@ -3,6 +3,7 @@ package tw.com.softleader.containermonitor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 @Builder
 @Getter
 @Slf4j
+@ToString
 public class K8sDeployNames {
 
   public static final Optional<K8sDeployNames> from(@NonNull String containerName) {
