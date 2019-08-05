@@ -159,7 +159,7 @@ public class DockerInfoCollector implements ApplicationRunner {
         .collect(toPsMap());
   }
 
-  private Collector<String[], ?, Map<String, String[]>> toPsMap() {
+  Collector<String[], ?, Map<String, String[]>> toPsMap() {
     return Collectors.toMap(r -> r[0], r -> {
       if (r.length > 2) {
         return new String[] {r[1], r[2]};
