@@ -18,6 +18,11 @@ public class UnixCommand implements Command {
 				"docker ps --format {{.ID}}"+S+"{{.Image}}"+S+"{{.Networks}}");
 	}
 
+	@Override public List<String> dockerImageLs() {
+		return Arrays.asList("/bin/sh", "-c",
+				"docker image ls --format {{.ID}}"+S+"{{.Repository}}:{{.Tag}}");
+	}
+
 	@Override
 	public List<String> dockerStats() {
 		return Arrays.asList("/bin/sh", "-c",

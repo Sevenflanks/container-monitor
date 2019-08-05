@@ -1,10 +1,11 @@
 package tw.com.softleader.containermonitor;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
+import tw.com.softleader.containermonitor.base.DockerImage;
+import tw.com.softleader.containermonitor.base.DockerPs;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -16,7 +17,8 @@ import static tw.com.softleader.containermonitor.Command.S;
 public class DockerInfoCollectorTest {
 
   private DockerInfoCollector collector;
-  private Map<String, String[]> dockerPs;
+  private Map<String, DockerPs> dockerPs;
+  private Map<String, DockerImage> dockerImageLs;
 
   @Before
   public void init() {
@@ -25,13 +27,16 @@ public class DockerInfoCollectorTest {
     try (Stream<String> stream = classLoaderResource("log_docker_ps")) {
       dockerPs = stream.map(line -> line.split(S)).collect(collector.toPsMap());
     }
+    try (Stream<String> stream = classLoaderResource("log_docker_image_ls")) {
+      dockerImageLs = stream.map(line -> line.split(S)).collect(collector.toImageMap());
+    }
   }
 
   @Test
   public void toContainer() {
     try (Stream<String> stream = classLoaderResource("log_docker_stats")) {
       stream
-          .map(line -> collector.toContainer(line, dockerPs))
+          .map(line -> collector.toContainer(line, dockerPs, dockerImageLs))
           .filter(collector::isMonitorTarget)
           .forEach(
               c ->
@@ -46,4 +51,5 @@ public class DockerInfoCollectorTest {
   private Stream classLoaderResource(String name) {
     return Files.lines(Paths.get(ClassLoader.getSystemResource(name).toURI()));
   }
+
 }

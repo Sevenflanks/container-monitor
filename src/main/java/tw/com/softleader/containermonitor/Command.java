@@ -10,5 +10,7 @@ public interface Command {
 
   List<String> dockerPs();
 
+  List<String> dockerImageLs();
+
   List<String> dockerStats();
 }

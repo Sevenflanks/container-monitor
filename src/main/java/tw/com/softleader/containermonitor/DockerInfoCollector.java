@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import tw.com.softleader.containermonitor.base.BytesUtils;
 import tw.com.softleader.containermonitor.base.ContainerStats;
+import tw.com.softleader.containermonitor.base.DockerImage;
+import tw.com.softleader.containermonitor.base.DockerPs;
 import tw.com.softleader.containermonitor.base.JvmMetric;
 
 import java.io.BufferedReader;
@@ -32,11 +34,12 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static tw.com.softleader.containermonitor.Command.*;
+import static tw.com.softleader.containermonitor.Command.S;
 
 @Slf4j
 @Service
@@ -138,7 +141,7 @@ public class DockerInfoCollector implements ApplicationRunner {
   /**
    * 取得 docker ps 資訊, 並以Map包裝(ContainerId為key)
    */
-  private Map<String, String[]> callDockerPs() throws IOException {
+  private Map<String, DockerPs> callDockerPs() throws IOException {
     // 呼叫 docker ps
     final List<String> cmdAndArgs = command.dockerPs();
 
@@ -159,17 +162,44 @@ public class DockerInfoCollector implements ApplicationRunner {
         .collect(toPsMap());
   }
 
-  Collector<String[], ?, Map<String, String[]>> toPsMap() {
+  /**
+   * 取得 docker image ls 資訊, 並以Map包裝(ContainerId為key)
+   */
+  private Map<String, DockerImage> callDockerImageLs() throws IOException {
+    // 呼叫 docker ps
+    final List<String> cmdAndArgs = command.dockerImageLs();
+
+    // 將結果轉換為 map
+    final ProcessBuilder pb = new ProcessBuilder(cmdAndArgs);
+    final Process process = pb.start();
+    final BufferedReader reader =
+        new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+    // key=imageId, value=tag
+    log.debug("running docker image ls command: {}", cmdAndArgs);
+    return reader.lines()
+        .map(line -> {
+          log.trace(line);
+          return line;
+        })
+        .map(line -> line.split(S))
+        .collect(toImageMap());
+  }
+
+  Collector<String[], ?, Map<String, DockerPs>> toPsMap() {
     return Collectors.toMap(r -> r[0], r -> {
       if (r.length > 2) {
-        return new String[] {r[1], r[2]};
+        return new DockerPs(r[0], r[1], r[2]);
       } else {
         // 有可能會缺少一些參數，屆時不抓近來
-        return new String[] {r[1], "N/A"};
+        return new DockerPs(r[0], r[1], "N/A");
       }
     });
   }
 
+  Collector<String[], ?, Map<String, DockerImage>> toImageMap() {
+    return Collectors.toMap(r -> r[0], r -> new DockerImage(r[0], r[1]), (o1, o2) -> o1.getName().compareTo(o2.getName()) > 0 ? o1: o2);
+  }
 
   /**
    * 取得 docker stats 資訊
@@ -179,7 +209,8 @@ public class DockerInfoCollector implements ApplicationRunner {
     final List<String> cmdAndArgs = command.dockerStats();
 
     // 呼叫 docker ps
-    final Map<String, String[]> dockerPs = callDockerPs();
+    final Map<String, DockerPs> dockerPs = callDockerPs();
+    final Map<String, DockerImage> dockerImageLs = callDockerImageLs();
 
     // 將結果轉換為物件
     final ProcessBuilder pb = new ProcessBuilder(cmdAndArgs);
@@ -192,7 +223,7 @@ public class DockerInfoCollector implements ApplicationRunner {
           log.trace(line);
           return line;
         })
-        .map(line -> toContainer(line, dockerPs))
+        .map(line -> toContainer(line, dockerPs, dockerImageLs))
         .map(container -> container.withRecordTime(recordTime)).filter(this::isMonitorTarget);
   }
 
@@ -207,21 +238,23 @@ public class DockerInfoCollector implements ApplicationRunner {
     return true;
   }
 
-  ContainerStats toContainer(String line, Map<String, String[]> dockerPs) {
+  ContainerStats toContainer(String line, Map<String, DockerPs> dockerPs, Map<String, DockerImage> dockerImageLs) {
     String[] dockerStats = line.split(S);
     String id = dockerStats[0];
     String cpu = dockerStats[2];
     String[] mem = dockerStats[3].split(" / ");
     String[] net = dockerStats[4].split(" / ");
     String[] block = dockerStats[5].split(" / ");
-    String[] dockerInfo = dockerPs.get(id);
+    DockerPs dockerInfo = dockerPs.get(id);
+    String imageId = dockerInfo.getImageId();
+    String imageName = Optional.ofNullable(imageId).map(dockerImageLs::get).map(DockerImage::getName).orElse(imageId);
 
     return ContainerStats.builder()
         .id(id)
         .name(dockerStats[1])
         .k8sDeployNames(K8sDeployNames.from(dockerStats[1]))
-        .image(dockerInfo[0])
-        .network(dockerInfo[1])
+        .image(imageName)
+        .network(dockerInfo.getNetwork())
         .cpuPerc(Double.valueOf(cpu.substring(0, cpu.length() - 1)))
         .memUsage(BytesUtils.toB(mem[0]))
         .memLimit(BytesUtils.toB(mem[1]))

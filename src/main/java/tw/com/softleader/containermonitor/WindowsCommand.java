@@ -19,6 +19,12 @@ public class WindowsCommand implements Command {
 				"--format", "{{.ID}}"+S+"{{.Image}}"+S+"{{.Networks}}");
 	}
 
+	@Override public List<String> dockerImageLs() {
+		return Arrays.asList("cmd", "/c",
+				"docker", "image", "ls",
+				"--format", "{{.ID}}"+S+"{{.Repository}}:{{.Tag}}");
+	}
+
 	@Override
 	public List<String> dockerStats() {
 		return Arrays.asList("cmd", "/c",
