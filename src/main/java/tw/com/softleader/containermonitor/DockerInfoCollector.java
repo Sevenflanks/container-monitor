@@ -43,29 +43,21 @@ import static tw.com.softleader.containermonitor.Command.*;
 @Profile("!test")
 public class DockerInfoCollector implements ApplicationRunner {
 
-  @Value("${container.monitor.record.file.path.root}")
-  private String fileRoot;
+  @Value("${container.monitor.record.file.path.root}") private String fileRoot;
 
-  @Value("${container.monitor.run.cron_job}")
-  private String cronJob;
+  @Value("${container.monitor.run.cron_job}") private String cronJob;
 
-  @Value("${container.monitor.run.namespaces}")
-  Collection<String> namespaces;
+  @Value("${container.monitor.run.namespaces}") Collection<String> namespaces;
 
-  @Autowired
-  private ObjectMapper objectMapper;
+  @Autowired private ObjectMapper objectMapper;
 
-  @Autowired
-  private CsvMapper csvMapper;
+  @Autowired private CsvMapper csvMapper;
 
-  @Autowired
-  private TaskScheduler taskScheduler;
+  @Autowired private TaskScheduler taskScheduler;
 
-  @Autowired
-  private Command command;
+  @Autowired private Command command;
 
-  @Override
-  public void run(ApplicationArguments args) throws Exception {
+  @Override public void run(ApplicationArguments args) throws Exception {
     if (namespaces.size() > 0) {
       log.info("detected specified namespaces: {}", namespaces);
     }
@@ -91,9 +83,9 @@ public class DockerInfoCollector implements ApplicationRunner {
           log.debug("saving csv file: {}", path);
           // 檢查是否為新建
           boolean exists = path.toFile().exists();
-          try (OutputStream outputStream = Files.newOutputStream(
-              path,
-              StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND)) {
+          try (OutputStream outputStream = Files
+              .newOutputStream(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE,
+                  StandardOpenOption.APPEND)) {
             // 資料夾是否存在
             if (root.toFile().exists()) {
               Files.createDirectories(root);
@@ -108,14 +100,18 @@ public class DockerInfoCollector implements ApplicationRunner {
               csvMapper.writer(csvSchema.withUseHeader(true)).writeValue(outputStream, container);
             }
           } catch (Exception e) {
-            log.error("failed to write record file, id:{}, name:{}, cause:{}", container.getId(), container.getName(), e.getMessage());
+            log.error("failed to write record file, id:{}, name:{}, cause:{}", container.getId(),
+                container.getName(), e.getMessage());
           }
         });
 
-    log.info("finish collect docker info, processing time:{}ms", NumberFormat.getIntegerInstance().format(Duration.between(now, LocalDateTime.now()).toMillis()));
+    log.info("finish collect docker info, processing time:{}ms", NumberFormat.getIntegerInstance()
+        .format(Duration.between(now, LocalDateTime.now()).toMillis()));
   }
 
-  /** 取得 jvm 運行資訊 by container */
+  /**
+   * 取得 jvm 運行資訊 by container
+   */
   private ContainerStats loadJvmMetric(ContainerStats container) {
     try {
       // 呼叫 curl actuator endpoint
@@ -125,18 +121,23 @@ public class DockerInfoCollector implements ApplicationRunner {
       // 將結果轉為物件
       final ProcessBuilder pb = new ProcessBuilder(cmdAndArgs);
       final Process process = pb.start();
-      final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+      final BufferedReader reader =
+          new BufferedReader(new InputStreamReader(process.getInputStream()));
       final JvmMetric jvmMetric = reader.lines()
           .map(Unchecked.function(json -> objectMapper.readValue(json, JvmMetric.class)))
-          .findAny().orElse(null);
+          .findAny()
+          .orElse(null);
       container.setJvmMetric(jvmMetric);
     } catch (Exception e) {
-      log.error("failed to load jvm metric, id:{}, name:{}, cause:{}", container.getId(), container.getName(), e.getMessage());
+      log.error("failed to load jvm metric, id:{}, name:{}, cause:{}", container.getId(),
+          container.getName(), e.getMessage());
     }
     return container;
   }
 
-  /** 取得 docker ps 資訊, 並以Map包裝(ContainerId為key) */
+  /**
+   * 取得 docker ps 資訊, 並以Map包裝(ContainerId為key)
+   */
   private Map<String, String[]> callDockerPs() throws IOException {
     // 呼叫 docker ps
     final List<String> cmdAndArgs = command.dockerPs();
@@ -144,7 +145,8 @@ public class DockerInfoCollector implements ApplicationRunner {
     // 將結果轉換為 map
     final ProcessBuilder pb = new ProcessBuilder(cmdAndArgs);
     final Process process = pb.start();
-    final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+    final BufferedReader reader =
+        new BufferedReader(new InputStreamReader(process.getInputStream()));
 
     // key=containerId, value=[image, networks]
     log.debug("running docker ps command: {}", cmdAndArgs);
@@ -157,18 +159,21 @@ public class DockerInfoCollector implements ApplicationRunner {
         .collect(toPsMap());
   }
 
-    Collector<String[], ?, Map<String, String[]>> toPsMap() {
-        return Collectors.toMap(r -> r[0], r -> {
-          if (r.length > 2) {
-            return new String[]{r[1], r[2]};
-          } else {
-            return new String[]{r[1], "N/A"};
-          }
-        });
-    }
+  private Collector<String[], ?, Map<String, String[]>> toPsMap() {
+    return Collectors.toMap(r -> r[0], r -> {
+      if (r.length > 2) {
+        return new String[] {r[1], r[2]};
+      } else {
+        // 有可能會缺少一些參數，屆時不抓近來
+        return new String[] {r[1], "N/A"};
+      }
+    });
+  }
 
 
-    /** 取得 docker stats 資訊 */
+  /**
+   * 取得 docker stats 資訊
+   */
   private Stream<ContainerStats> callDockerStats(LocalDateTime recordTime) throws IOException {
     // 呼叫 docker stats
     final List<String> cmdAndArgs = command.dockerStats();
@@ -179,7 +184,8 @@ public class DockerInfoCollector implements ApplicationRunner {
     // 將結果轉換為物件
     final ProcessBuilder pb = new ProcessBuilder(cmdAndArgs);
     final Process process = pb.start();
-    final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+    final BufferedReader reader =
+        new BufferedReader(new InputStreamReader(process.getInputStream()));
     log.debug("running docker stats command: {}", cmdAndArgs);
     return reader.lines()
         .map(line -> {
@@ -187,43 +193,43 @@ public class DockerInfoCollector implements ApplicationRunner {
           return line;
         })
         .map(line -> toContainer(line, dockerPs))
-        .map(container -> container.withRecordTime(recordTime))
-        .filter(this::isMonitorTarget);
+        .map(container -> container.withRecordTime(recordTime)).filter(this::isMonitorTarget);
   }
 
   boolean isMonitorTarget(ContainerStats c) {
-      if (c.getImage().startsWith("ibmcom")) {
-        return false;
-      }
-      if (namespaces.size() > 0 && c.getK8sDeployNames().isPresent()) {
-          return namespaces.stream().anyMatch(ns -> ns.equals(c.getK8sDeployNames().get().getNamespace()));
-      }
-      return true;
+    if (c.getImage().startsWith("ibmcom")) {
+      return false;
+    }
+    if (namespaces.size() > 0 && c.getK8sDeployNames().isPresent()) {
+      return namespaces.stream()
+          .anyMatch(ns -> ns.equals(c.getK8sDeployNames().get().getNamespace()));
+    }
+    return true;
   }
 
   ContainerStats toContainer(String line, Map<String, String[]> dockerPs) {
-      String[] dockerStats = line.split(S);
-      String id = dockerStats[0];
-      String cpu = dockerStats[2];
-      String[] mem = dockerStats[3].split(" / ");
-      String[] net = dockerStats[4].split(" / ");
-      String[] block = dockerStats[5].split(" / ");
-      String[] dockerInfo = dockerPs.get(id);
+    String[] dockerStats = line.split(S);
+    String id = dockerStats[0];
+    String cpu = dockerStats[2];
+    String[] mem = dockerStats[3].split(" / ");
+    String[] net = dockerStats[4].split(" / ");
+    String[] block = dockerStats[5].split(" / ");
+    String[] dockerInfo = dockerPs.get(id);
 
-      return ContainerStats.builder()
-              .id(id)
-              .name(dockerStats[1])
-              .k8sDeployNames(K8sDeployNames.from(dockerStats[1]))
-              .image(dockerInfo[0])
-              .network(dockerInfo[1])
-              .cpuPerc(Double.valueOf(cpu.substring(0, cpu.length() -1)))
-              .memUsage(BytesUtils.toB(mem[0]))
-              .memLimit(BytesUtils.toB(mem[1]))
-              .netIn(BytesUtils.toB(net[0]))
-              .netOut(BytesUtils.toB(net[1]))
-              .blockIn(BytesUtils.toB(block[0]))
-              .blockOut(BytesUtils.toB(block[1]))
-              .build();
+    return ContainerStats.builder()
+        .id(id)
+        .name(dockerStats[1])
+        .k8sDeployNames(K8sDeployNames.from(dockerStats[1]))
+        .image(dockerInfo[0])
+        .network(dockerInfo[1])
+        .cpuPerc(Double.valueOf(cpu.substring(0, cpu.length() - 1)))
+        .memUsage(BytesUtils.toB(mem[0]))
+        .memLimit(BytesUtils.toB(mem[1]))
+        .netIn(BytesUtils.toB(net[0]))
+        .netOut(BytesUtils.toB(net[1]))
+        .blockIn(BytesUtils.toB(block[0]))
+        .blockOut(BytesUtils.toB(block[1]))
+        .build();
   }
 
 }
