@@ -195,8 +195,8 @@ public class DockerInfoCollector implements ApplicationRunner {
       if (c.getImage().startsWith("ibmcom")) {
         return false;
       }
-      if (namespaces.size() > 0 && c.getK8sDeployNaming().isPresent()) {
-          return namespaces.stream().anyMatch(ns -> ns.equals(c.getK8sDeployNaming().get().getNamespace()));
+      if (namespaces.size() > 0 && c.getK8sDeployNames().isPresent()) {
+          return namespaces.stream().anyMatch(ns -> ns.equals(c.getK8sDeployNames().get().getNamespace()));
       }
       return true;
   }
@@ -213,7 +213,7 @@ public class DockerInfoCollector implements ApplicationRunner {
       return ContainerStats.builder()
               .id(id)
               .name(dockerStats[1])
-              .k8sDeployNaming(K8sDeployNames.from(dockerStats[1]))
+              .k8sDeployNames(K8sDeployNames.from(dockerStats[1]))
               .image(dockerInfo[0])
               .network(dockerInfo[1])
               .cpuPerc(Double.valueOf(cpu.substring(0, cpu.length() -1)))

@@ -11,6 +11,7 @@ import tw.com.softleader.containermonitor.K8sDeployNames;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 @Getter
 @Setter
@@ -53,12 +54,12 @@ public class ContainerStats {
   @JsonUnwrapped(prefix = "jvm.")
   private JvmMetric jvmMetric;
 
-  @JsonIgnore private Optional<K8sDeployNames> k8sDeployNaming;
+  @JsonIgnore private Optional<K8sDeployNames> k8sDeployNames;
 
   @JsonIgnore
   public String getSaveFilename() {
     return "record."
-        + k8sDeployNaming
+        + k8sDeployNames
             .map(K8sDeployNames::getDeploymentName)
             .filter(s -> !StringUtils.isEmpty(s))
             .orElseGet(() -> image.replaceAll("[:/]", "_"))
