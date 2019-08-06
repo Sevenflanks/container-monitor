@@ -42,7 +42,7 @@ docker run \
 
 ```
 
-- run as helm chart cronjob
+- run on Kubernetes
 ```sh
 # 1. login kubectl 
 
