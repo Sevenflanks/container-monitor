@@ -50,9 +50,9 @@ docker run \
 kubectl apply -f config/pv.yaml -f config/pvc.yaml
 
 # 3. apply yaml
-# cronjob.yaml - 以 cronjob 依照 corn 的設定重複執行, 執行的 worker 交由 k8s 安排
-# daemonset.yaml - 以 daemonset 在每一台 worker 依照 corn 的設定重複執行
-# daemonset-run-once.yaml - 以 daemonset 在每一台 worker 執行一次
+# cronjob.yaml - 依照 corn 的設定重複執行, 執行的 worker 交由 k8s 安排
+# daemonset.yaml - 在每一台 worker 依照 corn 的設定重複執行
+# daemonset-run-once.yaml - 在每一台 worker 執行一次
 kubectl apply -f config/YAML
 ```
 
