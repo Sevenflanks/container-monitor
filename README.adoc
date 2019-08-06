@@ -8,14 +8,14 @@
 image:{img-docker-image}[Get your own version badge on microbadger.com,link={url-docker-image}]
 
 == build
-```
+```sh
 # build image
 mvn clean compile jib:build -Dbuild.tag=v0.4.2
 ```
 
 == run
 - run as java app
-```
+```sh
 # 透過Maven啟動，紀錄寫在當前目錄
 mvn spring-boot:run
 
@@ -24,7 +24,7 @@ mvn spring-boot:run -Dcontainer.monitor.record.file.path.root=/logs/
 ```
 
 - run as docker image
-```
+```sh
 # 透過Docker啟動，紀錄寫出至mount目錄
 docker run \
        --rm \
@@ -43,8 +43,17 @@ docker run \
 ```
 
 - run as helm chart cronjob
-```
-呃..雖然提供了可是Matt操作太快我沒記下來
+```sh
+# 1. login kubectl 
+
+# 2. apply pv & pvc, 只需要第一次部署執行
+kubectl apply -f config/pv.yaml -f config/pvc.yaml
+
+# 3. apply yaml
+# cronjob.yaml - 以 cronjob 在依照 corn 設定重複制行, 執行 worker 交由 k8s 安排
+# daemonset.yaml - 以 daemonset 在每一台 worker 依照 corn 設定重複制行
+# daemonset-run-once.yaml - 以 daemonset 在每一台 worker 執行一次
+kubectl apply -f config/YAML
 ```
 
 == properties
@@ -68,7 +77,7 @@ run as docker image: `/var/softleader_home/container_monitor/`
 
 == JVM Metric support
 本 App 可以蒐集 JVM 運行資訊，但需要該Container的JavaAPP具有Actuator，並設定以下參數
-```
+```properties
 endpoints.metrics.enabled=true
 management.security.enabled=false
 ```
